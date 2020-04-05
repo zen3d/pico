@@ -1,0 +1,237 @@
+`*-----------------------------------*`
+`*           >>>Pico 2.0<<<          *`
+`*            Theo D'Hondt           *`
+`*  VUB Programming Technology Lab   *`
+`*               ©2002               *`
+`*-----------------------------------*`
+`*        global declarations        *`
+`*      (METACIRCULAR VERSION)       *`
+`*-----------------------------------*`
+
+{ _EMPTY_: void;     
+  _EOLN_ : void;
+  _NULL_ : void;
+  _EXIT_ : void;
+  _FALSE_: void;
+  _TRUE_ : void;
+  _QUOTE_: void;
+  _VOID_ : void;
+  _ZERO_ : void;
+
+  Error(Msg)::
+    { display("***error*** ", Msg);
+      continue(_EXIT_, void) };
+
+  TAG_idx:: 1;
+  TAG(Exp)::
+    Exp[TAG_idx];
+
+  VOI_tag:: 0;
+  VOI_siz:: 1;
+  VOI()::
+    [ VOI_tag ];
+
+  REF_tag:: 1;
+  REF_siz:: 2;
+  REF_NAM:: 2;
+  REF(Nam)::
+    [ REF_tag, Nam ];
+
+  APL_tag:: 2;
+  APL_siz:: 3;
+  APL_EXP:: 2;
+  APL_ARG:: 3;
+  APL(Exp, Arg)::
+    [ APL_tag, Exp, Arg ];
+
+  TBL_tag:: 3;
+  TBL_siz:: 3;
+  TBL_EXP:: 2;
+  TBL_IDX:: 3;
+  TBL(Exp, Idx)::
+    [ TBL_tag, Exp, Idx ];
+
+  QUA_tag:: 4;
+  QUA_siz:: 3;
+  QUA_EXP:: 2;
+  QUA_INV:: 3;
+  QUA(Exp, Inv)::
+    [ QUA_tag, Exp, Inv ];
+
+  DCL_tag:: 5;
+  DCL_siz:: 3;
+  DCL_INV:: 2;
+  DCL_EXP:: 3;
+  DCL(Inv, Exp)::
+    [ DCL_tag, Inv, Exp ];
+
+  DEF_tag:: 6;
+  DEF_siz:: 3;
+  DEF_INV:: 2;
+  DEF_EXP:: 3;
+  DEF(Inv, Exp)::
+    [ DEF_tag, Inv, Exp ];
+
+  SET_tag:: 7;
+  SET_siz:: 3;
+  SET_INV:: 2;
+  SET_EXP:: 3;
+  SET(Inv, Exp)::
+    [ SET_tag, Inv, Exp ];
+
+  CST_tag:: 8;
+  CST_siz:: 4;
+  CST_NAM:: 2;
+  CST_VAL:: 3;
+  CST_DCT:: 4;
+  CST(Nam, Val, Dct)::
+    [ CST_tag, Nam, Val, Dct ];
+
+  VAR_tag:: 9;
+  VAR_siz:: 4;
+  VAR_NAM:: 2;
+  VAR_VAL:: 3;
+  VAR_DCT:: 4;
+  VAR(Nam, Val, Dct)::
+    [ VAR_tag, Nam, Val, Dct ];
+
+  CNT_tag:: 10;
+  CNT_siz:: 1;
+  CNT_CNT:: 2;
+  CNT(Cnt)::
+    [ CNT_tag, Cnt ];
+
+  NAT_tag:: 11;
+  NAT_siz:: 3;
+  NAT_NAM:: 2;
+  NAT_NAT:: 3;
+  NAT(Nam, Nat)::
+    [ NAT_tag, Nam, Nat ];
+
+  FUN_tag:: 12;
+  FUN_siz:: 5;
+  FUN_NAM:: 2;
+  FUN_PAR:: 3;
+  FUN_BOD:: 4;
+  FUN_DCT:: 5;
+  FUN(Nam, Par, Bod, Dct)::
+    [ FUN_tag, Nam, Par, Bod, Dct ];
+
+  TAB_tag:: 13;
+  TAB_siz:: 1;
+  TAB_TAB:: 2;
+  TAB(Tab)::
+    [ TAB_tag, Tab ];
+
+  TXT_tag:: 14;
+  TXT_siz:: 1;
+  TXT_VAL:: 2;
+  TXT(Val)::
+    [ TXT_tag, Val ];
+
+  FRC_tag:: 15;
+  FRC_siz:: 1;
+  FRC_VAL:: 2;
+  FRC(Val):: 
+    [ FRC_tag, Val ];
+
+  QUO_tag:: 16;
+  QUO_siz:: 2;
+  QUO_EXP:: 2;
+  QUO(Exp)::
+    [ QUO_tag, Exp ];
+
+  NBR_tag:: 32;
+  NBR_siz:: 1;
+  NBR_VAL:: 2;
+  NBR(Val)::
+    [ NBR_tag, Val ];
+
+  is_VOI(Exp)::
+    TAG(Exp) = VOI_tag;
+
+  is_FRC(Exp)::
+    TAG(Exp) = FRC_tag;
+
+  is_TXT(Exp)::
+    TAG(Exp) = TXT_tag;
+
+  is_TAB(Exp)::
+    TAG(Exp) = TAB_tag;
+
+  is_FUN(Exp)::
+    TAG(Exp) = FUN_tag;
+
+  is_NAT(Exp)::
+    TAG(Exp) = NAT_tag;
+
+  is_CST(Exp)::
+    TAG(Exp) = CST_tag;
+
+  is_VAR(Exp)::
+    TAG(Exp) = VAR_tag;
+
+  is_CNT(Exp)::
+    TAG(Exp) = CNT_tag;
+
+  is_NBR(Exp)::
+    TAG(Exp) = NBR_tag;
+
+  is_NUM(Exp)::
+    is_NBR(Exp) | is_FRC(Exp);
+
+  is_FNC(Exp)::
+    is_FUN(Exp) | is_NAT(Exp);
+
+  is_DCT(Exp)::
+    is_VAR(Exp) | is_CST(Exp) | is_VOI(Exp);
+
+  Rank(Exp):
+    { case:: case(VOI_tag # VOI_siz,
+                  FRC_tag # FRC_siz,
+                  TXT_tag # TXT_siz,
+                  TAB_tag # TAB_siz,
+                  FUN_tag # FUN_siz,
+                  NAT_tag # NAT_siz,
+                  REF_tag # REF_siz,
+                  APL_tag # APL_siz,
+                  TBL_tag # TBL_siz,
+                  QUA_tag # QUA_siz,
+                  DEF_tag # DEF_siz,
+                  DCL_tag # DCL_siz,
+                  SET_tag # SET_siz,
+                  VAR_tag # VAR_siz,
+                  CST_tag # CST_siz,
+                  CNT_tag # CNT_siz,
+                  NBR_tag # NBR_siz,
+                     void # 0);
+  
+      Rank(Exp):=
+        { tag: TAG(Exp);
+          cas: case(tag);
+          cas(Exp) };
+
+      Rank(Exp) };
+
+  Map(Fun, Tab)::
+    { siz:: size(Tab);
+      pos: 0;
+      tab[siz]:: Fun(Tab[pos:=pos+1]);
+      tab };  
+
+  Map_expression(Fun, Exp)::
+    { siz:: size(Exp);
+      tag: TAG(Exp);
+      exp[siz]:: tag;
+      for(pos:2, pos<=siz, pos:=pos+1,
+        exp[pos]:= Fun(Exp[pos]));
+      exp };  
+
+  _EMPTY_:= TAB(empty);
+  _EOLN_ := TXT(eoln);
+  _NULL_ := TXT(null);
+  _QUOTE_:= TXT(quote);
+  _VOID_ := VOI();
+  _ZERO_ := NBR(0);
+
+  display("globals ...... installed", eoln) } 

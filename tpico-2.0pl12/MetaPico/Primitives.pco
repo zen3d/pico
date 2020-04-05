@@ -1,0 +1,466 @@
+`*-----------------------------------*`
+`*           >>>Pico 2.0<<<          *`
+`*            Theo D'Hondt           *`
+`*  VUB Programming Technology Lab   *`
+`*               ©2002               *`
+`*-----------------------------------*`
+`*              natives              *`
+`*       (METACIRCULAR VERSION)      *`
+`*-----------------------------------*`
+
+`---------------------------------------------------------------------`
+` empty: TAB(empty)                                                   `
+` eoln:  TXT(eoln)                                                    `
+` null:  TXT(null)                                                    `
+` quote: TXT(quote)                                                   `
+` void:  VOI()                                                        ` 
+`--------------------------ARITHMETIC---------------------------------`
+` + @ lst:                                                            `        
+`   down(+ @ (map(up, up(lst)))             (Nbr+Frc)^1+ -> (Nbr+Frc) `
+`                                                       Txt^2+ -> Txt `
+`                                                                     `
+`   +()     error                                                     `
+`   +x      identity iff x is number                                  `
+`   x+y     integer sum of x and y iff x and y are number             `
+`   x+y     floating sum of x and y iff x or y are fraction           `
+`   x+y     concatenation of x and y iff x and y are text             `
+`   x+y     error in other cases                                      `
+`   x+y+z?  (x+y)+z?                                                  `
+`                                                                     `
+` - @ lst:                                                            `        
+`   down(- @ (map(up, up(lst)))             (Nbr+Frc)^1+ -> (Nbr+Frc) `      
+`                                                                     `
+`   -()     error                                                     `
+`   -x      complement iff x is number                                `
+`   x-y     integer difference of x and y iff x and y are number      `
+`   x-y     floating difference of x and y iff x or y are fraction    `
+`   x-y     error in other cases                                      `
+`   x-y-z?  (x-y)-z?                                                  `
+`                                                                     `                                                                     
+` * @ lst:                                                            `        
+`   down(* @ (map(up, up(lst)))             (Nbr+Frc)^2+ -> (Nbr+Frc) `        
+`                                                                     `
+`   *()     error                                                     `
+`   *x      error                                                     `
+`   x*y     integer product of x and y iff x and y are number         `
+`   x*y     floating product of x and y iff x or y are fraction       `
+`   x*y     error in other cases                                      `
+`   x*y*z?  (x*y)*z?                                                  `
+`                                                                     `                                                                     
+` / @ lst:                                                            `        
+`   down(/ @ (map(up, up(lst)))                   (Nbr+Frc)^2+ -> Frc `       
+`                                                                     `
+`   /()     error                                                     `
+`   /x      error                                                     `
+`   x/y     floating quotient of x and y iff x and y are number       `
+`           or fraction                                               `
+`   x/y     error in other cases                                      `
+`   x/y/z?  (x/y)/z?                                                  `
+`                                                                     `
+` // @ lst:                                                           `        
+`   down(// @ (map(up, up(lst)))                        Nbr^2+ -> Nbr `       
+`                                                                     `
+`   //()    error                                                     `
+`   //x     error                                                     `
+`   x//y    integer quotient of x and y iff x and y are number        `
+`   x//y    error in other cases                                      `
+`   x//y//z? (x//y)//z?                                               `
+`                                                                     `
+` \\ @ lst:                                                           `        
+`   down(\\ @ (map(up, up(lst)))                        Nbr^2+ -> Nbr `       
+`                                                                     `
+`   \\()    error                                                     `
+`   \\x     error                                                     `
+`   x\\y    integer remainder of x and y iff x and y are number       `
+`   x\\y    error in other cases                                      `
+`   x\\y\\z? (x\\y)\\z?                                               `
+`                                                                     `
+` ^ @ lst:                                                            `        
+`   down(^ @ (map(up, up(lst)))                   (Nbr+Frc)^2+ -> Frc `
+`                                                                     `
+`   ^()     error                                                     `
+`   ^x      error                                                     `
+`   x^y     floating power of x and y iff x and y are number          `
+`           or fraction                                               `
+`   x^y     error in other cases                                      `
+`   x^y^z?  (x^y)^^z?                                                 `
+`                                                                     `
+`--------------------------RELATIONAL---------------------------------`
+` x<y:                                                                `        
+`   (up(x)<up(y))(true, false)                     (Nbr+Frc)^2 -> Bln `     
+`                                                        Txt^2 -> Bln `     
+`                                                                     `
+`   x<y     true if x numerically before y, else false iff x and y    `
+`           are number or fraction                                    `
+`   x<y     true if x lexicographically before y, else false iff x    `
+`           and y are text                                            `
+`   x<y     error in other cases                                      `
+`                                                                     `
+` x<=y:                                                               `        
+`   !(x>y)                                         (Nbr+Frc)^2 -> Bln `     
+`                                                        Txt^2 -> Bln `     
+`                                                                     `
+`   x<=y    true if x numerically not after y, else false iff x and y `
+`           are number or fraction                                    `
+`   x<=y    true if x lexicographically not after y, else false iff x `
+`           and y are text                                            `
+`   x<=y    error in other cases                                      `
+`                                                                     `
+` x=y:                                                                `        
+`   (up(x)=up(y))(true, false)                     (Nbr+Frc)^2 -> Bln `     
+`                                                        Txt^2 -> Bln `     
+`                                                                     `
+`   x=y     true if x numerically equal to y, else false iff x and y  `
+`           are number or fraction                                    `
+`   x=y     true if x lexicographically equal to y, else false iff x  `
+`           and y are text                                            `
+`   x=y     error in other cases                                      `
+`                                                                     `
+` x!=y:                                                               `        
+`   !(x=y)                                         (Nbr+Frc)^2 -> Bln `     
+`                                                        Txt^2 -> Bln `
+`                                                                     `
+`   x!=y    true if x numerically different from y, else false iff x  `
+`           and y are number or fraction                              `
+`   x!=y    true if x lexicographically different from y, else false  `
+`           iff x and y are text                                      `
+`   x!=y    error in other cases                                      `
+`                                                                     `
+` x>y:                                                                `        
+`   (up(x)>up(y))(true, false)                     (Nbr+Frc)^2 -> Bln `     
+`                                                        Txt^2 -> Bln `     
+`                                                                     `
+`   x<y     true if x numerically after y, else false iff x and y     `
+`           are number or fraction                                    `
+`   x<y     true if x lexicographically after y, else false iff x     `
+`           and y are text                                            `
+`   x<y     error in other cases                                      `
+`                                                                     `
+` x>=y:                                                               `        
+`   !(x<y)                                         (Nbr+Frc)^2 -> Bln `     
+`                                                        Txt^2 -> Bln `  
+`                                                                     `
+`   x>=y    true if x numerically not before y, else false            `
+`           iff x and yare number or fraction                         `
+`   x>=y    true if x lexicographically not before y, else false      `
+`           iff xand y are text                                       `
+`   x>=y    error in other cases                                      `
+`                                                                     `
+` x~q:                                                                `        
+`   (up(x)~up(q))(true, false)                     (Nbr+Frc)^2 -> Bln `     
+`                                                        Txt^2 -> Bln `     
+`                                                                     `
+`   x~y     true if x identical to y, else false                      `
+`                                                                     `
+` x!~q:                                                               `        
+`   !(x~q)                                         (Nbr+Frc)^2 -> Bln `     
+`                                                        Txt^2 -> Bln `
+`                                                                     `
+`   x~y     true if x not identical to y, else false                  `
+`                                                                     `
+`--------------------------CONVERSION---------------------------------`
+` trunc(x):                                                           `         
+`   down(trunc(up(num)))                           (Nbr+Frc)^2 -> Nbr `      
+`                                                                     `
+`   trunc(x)  identity iff x number                                   `
+`   trunc(x)  integer truncation iff x fraction                       `
+`   trunc(x)  error in other cases                                    `
+`                                                                     `
+` abs(x):                                                             `           
+`   down(abs(up(x)))                                       Nbr -> Nbr `       
+`                                                          Frc -> Frc `       
+`                                                                     `
+`   abs(x)  identity if x is positive iff x number or fraction        `
+`   abs(x)  complement if x is negative iff x number or fraction      `
+`   abs(x)  error in other cases                                      `
+`                                                                     `
+` char(nbr):                                                          `          
+`   down(char(up(nbr)))                                    Nbr -> Txt `      
+`                                                                     `
+`   char(nbr)  1-character text equivalent of number nbr              `
+`                                                                     `
+` ord(txt):                                                           `           
+`   down(ord(up(txt)))                                     Txt -> Nbr `      
+`                                                                     `
+`   ord(txt)  number equivalent of 1-character text txt               `
+`                                                                     `
+` number(txt):                                                        `        
+`   down(number(up(txt)))                            Txt -> {Nbr|Voi} `      
+`                                                                     `
+`   number(txt)  number described by text, if possible                `
+`   number(txt)  void in other cases                                  `
+`                                                                     `
+` text(val):                                                          `          
+`   down(text(up(val)))                          (Nbr+Frc+Txt) -> Txt `       
+`                                               \(Nbr+Frc+Txt) -> Voi `
+`                                                                     `
+`   text(val)  textual representation of val, if possible             `
+`   text(val)  void in other cases                                    `
+`                                                                     `
+`--------------------------UTILITY------------------------------------`
+` random():                                                           `         
+`   down(random())                                             -> Nbr `      
+`                                                                     `
+`   random()  random number                                           `
+`                                                                     `
+` clock():                                                            `          
+`   down(clock())                                              -> Nbr `
+`                                                                     `
+`   clock()  number of seconds since startup                          `
+`                                                                     `
+`--------------------------TRANSCENDENTAL-----------------------------`
+` sqrt(num):                                                          `          
+`   down(sqrt(up(num)))                              (Nbr+Frc) -> Frc `       
+`                                                                     `
+`   sqrt(num)  square root of number or fraction num                  `
+`                                                                     `
+` sin(num):                                                           `           
+`   down(sin(up(num)))                               (Nbr+Frc) -> Frc `      
+`                                                                     `
+`   sqrt(num)  sine of number or fraction num                         `
+`                                                                     `
+` cos(num):                                                           `           
+`   down(cos(up(num)))                               (Nbr+Frc) -> Frc `      
+`                                                                     `
+`   cos(num)  cosine of number or fraction num                        `
+`                                                                     `
+` tan(num):                                                           `           
+`   down(tan(up(num)))                               (Nbr+Frc) -> Frc `      
+`                                                                     `
+`   tan(num)  tangens of number or fraction num                       `
+`                                                                     `
+` arcsin(num):                                                        `        
+`   down(arcsin(up(num)))                            (Nbr+Frc) -> Frc `       
+`                                                                     `
+`   arcsin(num)  arc sine of number or fraction num                   `
+`                                                                     `
+` arccos(num):                                                        `        
+`   down(arccos(up(num)))                            (Nbr+Frc) -> Frc `      
+`                                                                     `
+`   arccos(num)  arc cosine of number or fraction num                 `
+`                                                                     `
+` arctan(num):                                                        `        
+`   down(arctan(up(num)))                            (Nbr+Frc) -> Frc `       
+`                                                                     `
+`   arctan(num)  arc tangens of number or fraction num                `
+`                                                                     `
+` exp(num):                                                           `           
+`   down(exp(up(num)))                               (Nbr+Frc) -> Frc `
+`                                                                     `
+`   exp(num)  Euler value of number or fraction num                   `
+`                                                                     `
+` log(num):                                                           `                                                                     `   down(log(up(num)))                               (Nbr+Frc) -> Frc ` 
+`                                                                     `
+`   log(num)  logarithm of number or fraction num                     `
+`                                                                     `
+`--------------------------STRING-------------------------------------`
+` length(txt):                                                        `         
+`   down(length(up(txt)))                                  Txt -> Nbr `                                                                                                           `                                                                     `
+`   length(txt)  length of text                                       `
+`                                                                     `
+` explode(txt):                                                       `        
+`   down(explode(up(txt)))                                 Txt -> Tab `       
+`                                                                     `
+`   explode(txt)  unpack text into table of characters                `
+`                                                                     `
+` implode(tab):                                                       `        
+`   down(implode(up(tab)))                                 Tab -> Txt `
+`                                                                     `
+`   implode(tab)  pack table of characters into text                  `
+`                                                                     `
+`--------------------------IDENTITY-----------------------------------`
+` is_void(val):                                                       `       
+`   tag(val) = voi_tag                                     Any -> Bln `
+`                                                                     `
+`   is_void(val)  true if val is void, else false                     `
+`                                                                     `
+` is_number(val):                                                     `              
+`   tag(val) = nbr_tag                                     Any -> Bln `
+`                                                                     `
+`   is_number(val)  true if val is a number, else false               `
+`                                                                     `
+` is_fraction(val):                                                   `            
+`   tag(val) = frc_tag                                     Any -> Bln `
+`                                                                     `
+`   is_fraction(val)  true if val is a fraction, else false           `
+`                                                                     `
+` is_text(val):                                                       `                
+`   tag(val) = txt_tag                                     Any -> Bln `
+`                                                                     `
+`   is_text(val)  true if val is text, else false                     `
+`                                                                     `
+` is_table(val):                                                      `               
+`   tag(val) = tab_tag                                     Any -> Bln `
+`                                                                     `
+`   is_table(val)  true if val is a table , else false                `
+`                                                                     `
+` is_function(val):                                                   `            
+`   (tag(val) = fun_tag) |                                            ` 
+`   (tag(val) = nat_tag)                                   Any -> Bln `
+`                                                                     `
+`   is_function(val)  true if val is a function or native, else false `
+`                                                                     `
+` is_dictionary(val):                                                 `          
+`   (tag(val) = cst_tag) |                                            ` 
+`   (tag(val) = var_tag) |                                            ` 
+`   (tag(val) = voi_tag)                                   Any -> Bln `
+`                                                                     `
+`   is_dictionary(val)  true if val is a dictionary, else false       `
+`                                                                     `
+` is_continuation(val):                                               `        
+`   tag(val) = cnt_tag                                     Any -> Bln `
+`                                                                     `
+`   is_continuation(val)  true if val is a continuation, else false   `
+`                                                                     `
+`--------------------------TABLE--------------------------------------`
+` size(tab):                                                          `         
+`   down(size(up(tab)))                                    Tab -> Nbr `                                                                                                           `                                                                     `
+`   size(tab)  size of table tab                                      `
+`                                                                     `
+` table@tab:                                                          `        
+`   tab                                                 Any^0+ -> Tab `                                                                                                           `                                                                     `
+`   table@tab  construct table from arguments                         `
+`                                                                     `
+` p#q:                                                                `        
+`   TAB(p,q)                                           Any*Any -> Tab `                                                                                                           `                                                                     `
+`   p#q    pair p and q in a table                                    `
+`                                                                     `
+`--------------------------INTERACTION--------------------------------`
+` display@lst:                                                        `        
+`   down(display@(map(up, up(lst)))                     Any^0+ -> Txt `     
+`                                                                     `
+`   display@lst   display arguments and return null character         `
+`                                                                     `
+` accept():                                                           `        
+`   down(accept())                                             -> Txt `
+`                                                                     `
+`   accept()   return input as text                                   `
+`                                                                     `
+`--------------------------BOOLEAN------------------------------------`
+` true(p(),q()):                                                      `        
+`   p()                                                Any*Any -> Any `     
+`                                                                     `
+`   true(p(),q())  Church <true> function                             `
+`                                                                     `
+` false(p(),q()):                                                     `        
+`   q()                                                Any*Any -> Any `
+`                                                                     `
+`   false(p(),q())  Church <false> function                           `
+`                                                                     `
+` p&q():                                                              `        
+`   p(q(),false)                                       Bln*Any -> Bln `      
+`                                                                     `
+`   p&q()  Church <and> function                                      `
+`                                                                     `
+` p|q():                                                              `        
+`   p(true,q())                                        Bln*Any -> Bln `     
+`                                                                     `
+`   p|q()  Church <or> function                                       `
+`                                                                     `
+` !p:                                                                 `        
+`   p(false,true)                                          Bln -> Bln `
+`                                                                     `
+`   !p  Church <not> function                                         `
+`                                                                     `
+`--------------------------CONTROL------------------------------------`
+` begin@lst:                                                          `        
+`   lst(size(lst))                                      Any^1+ -> Any `                                                                                                           `                                                                     `
+`   begin@lst  compound expression, returning last value              `
+`                                                                     `
+` if(bln,cns()):                                                      `        
+`   bln(cns(),void)                                    Bln*Any -> Any `                                                                                                           `                                                                     `
+`   if(bln,cns())  Church <if> without alternative                    `
+`                                                                     `
+` if(bln,cns(),alt()):                                                `        
+`   bln(cns(),alt())                               Bln*Any*Any -> Any `                                                                                                           `                                                                     `
+`   if(bln,cns(),alt())  Church <if> with alternative                 `
+`                                                                     `
+` while(prd(),exp()):                                                 `       
+`   { loop(val,bln)::                                                 `
+`       bln(loop(exp(),prd()),val);                                   `
+`     loop(void,prd()) }                               Any*Any -> Any `                                                                                                           `                                                                     `
+`   while(prd(),exp())  <while> iteration returning last value or void`
+`                                                                     `
+` until(prd(),exp()):                                                 `       
+`   { loop(val,bln)::                                                 `
+`       bln(val,loop(exp(),prd()));                                   `
+`     loop(exp(),prd()) }                              Any*Any -> Any `                                                                                                           `                                                                     `
+`   until(prd(),exp())  <until> iteration returning last value        `
+`                                                                     `
+` for(ini,prd(),inc(),exp()):                                         `       
+`   while(prd(),                                                      `
+`     { val: exp(); inc(); val })                        Any^4 -> Any `                                                                                                           `                                                                     `
+`   begin@lst  compound expression, returning last value              `
+`                                                                     `
+` case@lst:                                                           `       
+`   down(case @ (map(up, up(lst)))                      Tab^1+ -> Fun `                                                                                                           `                                                                     `
+`   case@lst  case epression, returning selector function             `
+`                                                                     `
+`--------------------------METALEVEL----------------------------------`
+` load(txt):                                                          `
+`   down(load(up(txt)))                                    Any -> Txt `                                                                                                           `                                                                     `
+`   load(txt)  evaluate code from file named txt                      `                                                                     `                                                                     `
+` dump(exp, txt):                                                     `
+`   down(dump(up(exp)))                                Any*Txt -> Voi `                                                                                                           `                                                                     `
+`   dump(exp)  dump exp to file named txt and return void             `
+`                                                                     `
+` read(txt):                                                          `
+`   down(read(up(txt)))                                    Txt -> Any `                                                                                                           `                                                                     `
+`   print(exp)  print representation of exp and return null character `
+`                                                                     `
+` eval(exp):                                                          `
+`   down(eval(up(exp)))                                    Any -> Any `                                                                                                           `                                                                     `
+`   eval(exp)  evaluate exp and return its value                      `
+`                                                                     `
+` print(exp):                                                         `
+`   down(print(up(exp)))                                   Any -> Txt `                                                                                                           `                                                                     `
+`   print(exp)  print representation of exp and return null character `
+`                                                                     `
+` tag(exp):                                                           `
+`   down(tag(up(exp)))                                    Any -> Nbr  `                                                                                                           `                                                                     `
+`   tag(exp)  return tag of exp                                       `                                                                     `                                                                     `
+` rank(exp):                                                          `
+`   down(rank(up(exp)))                                    Any -> Nbr `                                                                                                           `                                                                     `
+`   rank(exp)  return number of attributes of exp                     `
+`                                                                     `
+` make(nbr):                                                          `
+`   down(make(up(nbr)))                                    Nbr -> Any `                                                                                                           `                                                                     `
+`   make(nbr)  instantiate expression with tag nbr                    ` 
+`                                                                     `
+` get(exp,nbr):                                                       `
+`   exp[nbr]                                           Any*Nbr -> Any `                                                                                                           `                                                                     `
+`   set(exp,val,nbr)  return attribute of exp at slot nbr             `
+`                                                                     `
+` set(exp,val,nbr):                                                   `
+`   exp[nbr]:= val                                 Any*Any*Nbr -> Voi `                                                                                                           `                                                                     `
+`   set(exp,val,nbr)  replace attribute of exp at slot nbr by val     `
+`                                                                     `
+`--------------------------DICTIONARIES-------------------------------`
+` capture():                                                          `
+`   down(capture())                                            -> Dct `                                                                                                           `                                                                     `
+`   capture()  return current dictionary                              `
+`                                                                     `
+` commit(dct):                                                        `
+`   down(escape(up(eval(exp())))                           Dct -> Voi `                                                                                                           `                                                                     `
+`   commit(dct)  replace current dictionary by dct and return void    `
+`                                                                     `
+`--------------------------CONTINUATIONS------------------------------`
+` call(exp(continuation)):                                            `
+`   down(call(up(eval(exp(down(continuation))))))          Any -> Any `                                                                                                           `                                                                     `
+`   call(exp(continuation))  return value of argument given the       `
+`                            current continuation                     `
+`                                                                     `
+` continue(cnt):                                                      `
+`   down(continue(up(cnt)))                                Cnt -> Any `                                                                                                           `                                                                     `
+`   escape(exp())  install timer interrupt call to exp()              `
+`                                                                     `
+` escape(exp()):                                                      `
+`   down(escape(up(eval(exp())))                           Any -> Any `                                                                                                           `                                                                     `
+`   escape(exp())  install timed interrupt call to exp()              `
+`                                                                     `    
+`--------------------------ERROR--------------------------------------`
+` error@lst:                                                          `
+`   down(error @ (map(up, up(lst)))                         Txt^1+ -> `                                                                                                           `                                                                     `
+`   error@lst  display arguments and abort evaluation                 `
+`                                                                     `    
+`---------------------------------------------------------------------`

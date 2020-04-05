@@ -1,0 +1,22 @@
+`*-----------------------------------*`
+`*           >>>Pico 2.0<<<          *`
+`*            Theo D'Hondt           *`
+`*  VUB Programming Technology Lab   *`
+`*               ©2002               *`
+`*-----------------------------------*`
+`*           Pico REP loop           *`
+`*      (METACIRCULAR VERSION)       *`
+`*-----------------------------------*`
+
+{ Pico()::
+    { Init_Native();
+      display("start Pico");
+      call(_EXIT_:= continuation);
+      display(eoln);
+      entry: accept(); 
+      if(entry != "",
+        { display(eoln);
+          Print(Eval(Read(entry)));
+          continue(_EXIT_, void) });
+      display("end Pico") };
+  Pico() }

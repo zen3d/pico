@@ -1,0 +1,86 @@
+tpico version 1.1: 
+   - the first version, corresponds to the pico engine 1.1
+
+tpico version 1.1pl1: 
+   - contains minimal automatic configuration
+          sufficient for most linux and freebsd systems
+   - command line history saved to ~/.tpico_history
+          between sessions
+
+tpico version 1.1pl2:
+   - bug fixes
+
+tpico version 1.1pl3:
+   - one bug fix
+
+tpico version 1.1pl4:
+   - dirty hacks to allow tpico to be run from inetd
+   - finally a man page
+
+tpico version 1.1pl5:
+   - code cleaned up considerably (testing splint, see www.splint.org)
+
+tpico version 1.1pl6:
+   - configure script patched not to look for curses if ncurses exists:
+          including both causes conflicts in some gentoo installs
+   - configure script and makefile tweaked to use -falign-functions=2
+          when necessary
+   - further experiments with splint, annotations in tpico.c
+
+tpico version 2.0:
+   - integrated pico 2.0 (May 2004), the tpico-1.1 line is obsolete
+   - integrated wxPico from tpico-1.0pl6
+
+tpico version 2.0pl1:
+   - tpico.c compiled with -DTELNET compiles to a safe network service
+          with rlimits, with a disabled load primitive etc.
+   - wxPico starts with fixed pitch fonts now, and it got a braindead
+          Undo function which will have to do for now
+
+tpico version 2.0pl2:
+   - reintroduced threads, but only ifdef __WXGTK__, just to squash the
+          screen update bug in wxGTK during wxYield()
+   - implemented ctrl-enter ("run line" but also to conclude input in
+          Windows and optionally also in GTK and Mac)
+   - first version to run on Mac
+
+tpico version 2.0pl3:
+   - introduced tpico -s
+   - added tpico-demo.cgi and special purpose versions tpicoc, tpicos
+   - DTELNET has been split up into security features a la carte,
+          see tpico/Makefile and tpico/README.tpico*
+
+tpico version 2.0pl4:
+   - bug fix: VAR_ERROR added to PicoStrings.h (erroneous errors !)
+   - introduced tab completion and parenthesis matching
+
+tpico version 2.0pl5:
+   - somehow the -falign-functions=2 had disappeared and nobody noticed
+          until now
+   - integrated newest pico 2.0 (small GC fix)
+
+tpico version 2.0pl6:
+   - small fixes to makefiles
+   - patched possible memory corruption in _CNT_save_ and _CNT_load_
+
+tpico version 2.0pl7:
+   - compiles against the OS/X readline libraries, which do not include
+          _rl_enable_paren_matching()
+   - small fixes to makefiles
+
+tpico version 2.0pl8:
+   - eliminate doubles in identifiergenerator, necessary for OS/X readline
+
+tpico version 2.0pl9:
+  - changed how to recognize GNU readline, necessary since OS/X Leopard
+
+tpico version 2.0pl10:
+  - gcc -m32 to make pico work for the 64 bit people
+
+tpico version 2.0pl11:
+  - extended effect of -s flag to pico load()
+  - ctrl-c now breaks immediately and completely at accept() in -s mode
+  - fix off-by-one bug in identifiergenerator
+
+tpico version 2.0pl12:
+  - fixed the configure scripts to abort on pure 64 bit systems

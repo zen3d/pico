@@ -1,0 +1,246 @@
+`*-----------------------------------*`
+`*           >>>Pico 2.0<<<          *`
+`*            Theo D'Hondt           *`
+`*  VUB Programming Technology Lab   *`
+`*               ©2002               *`
+`*-----------------------------------*`
+`*              reader               *`
+`*      (METACIRCULAR VERSION)       *`
+`*-----------------------------------*` 
+
+{ Read(Str):      
+    { begin_ref:: REF(TXT("begin"));
+      table_ref:: REF(TXT("table"));
+                                                            
+      TKN: void;
+      
+      skip()::
+        TKN:= Scan();
+        
+      next(Itm)::
+        { skip(); Itm };
+        
+      unexpected@any::
+        Error("Unexpected " + _MSG_[TKN]);
+          
+      expect(Tkn)::
+        if(TKN = Tkn, skip(), unexpected());
+          
+      expression():
+        void;
+
+      operand():
+        void;
+                    
+      operator():
+        void;
+                    
+      infix(Opr, Tkn)::
+        { loop(opr, count):
+            { opd: Opr();
+              tab: if((TKN = Tkn) & (opr = _SCAN_),
+                     { skip();
+                       loop(opr, count+1) },
+                     tab[count]: void);
+              tab[count]:= opd;
+              tab };
+          opd: Opr();
+          while(TKN = Tkn,
+            { opr: next(_SCAN_);
+              arg: loop(opr, 2);
+              arg[1]:= opd;
+              opd:= APL(REF(TXT(opr)), TAB(arg)) });
+          opd };
+
+      list(Sep, Trm)::
+        { loop(count):
+            { exp: expression();
+              tab: if(TKN = Sep,
+                     { skip();
+                       loop(count+1) },
+                     if(TKN = Trm,
+                       next(tab[count]: void),
+                       unexpected()));
+              tab[count]:= exp;
+              tab };
+          TAB(loop(1)) };
+
+      identity(Exp)::
+        Exp;
+
+      number():: 
+        NBR(next(_SCAN_));
+
+      fraction():: 
+        FRC(next(_SCAN_));
+
+      text()::
+        TXT(next(_SCAN_));
+
+      quotation()::
+        { skip();
+          exp: expression();
+          QUO(exp) };
+
+      variable()::
+        REF(TXT(next(_SCAN_)));
+
+      var_case:: case(NAM_token # variable,
+                      AOP_token # variable,
+                      MOP_token # variable,
+                      ROP_token # variable,
+                      XOP_token # variable, 
+                           void # unexpected);
+
+      application(Exp)::
+        APL(next(Exp), if(TKN = RPR_token,
+                          next(_EMPTY_),
+                          list(COM_token, RPR_token)));
+
+      apply(Exp)::
+        APL(next(Exp), operand());
+
+      tabulation(Exp)::
+        TBL(next(Exp), list(COM_token, RBR_token));
+
+      qua_case:: case(LPR_token # application,   
+                      CAT_token # apply,          
+                      LBR_token # tabulation,   
+                           void # identity);
+
+      qualification(Exp)::
+        { skip();
+          cas: var_case(TKN);
+          ref: cas();
+          cas: qua_case(TKN);
+          QUA(Exp, cas(ref)) };
+
+      void_(Exp)::
+        void;
+
+      inv_case:: case(LPR_token # application  ,   
+                      CAT_token # apply        ,          
+                      LBR_token # tabulation   ,    
+                      PER_token # qualification,  
+                           void # void_        );
+
+      invocation(Exp)::
+        { cas: inv_case(TKN);
+          exp: cas(Exp);
+          if(is_void(exp),
+            Exp,
+            invocation(exp)) };
+
+      name()::
+        invocation(variable());
+
+      begin_()::
+        { skip();
+          arg: list(SMC_token, RBC_token);
+          exp: APL(begin_ref, arg);
+          invocation(exp) };
+
+      table()::
+        { skip();
+          arg: if(TKN = RBR_token, 
+                  next(_EMPTY_),
+                  list(COM_token, RBR_token));
+          exp: APL(table_ref, arg);
+          invocation(exp) };
+
+      subexpression()::
+        { skip();
+          exp: expression();
+          expect(RPR_token);
+          invocation(exp) };
+
+      unr_case:: case(NBR_token # number   ,           
+                      FRC_token # fraction ,    
+                      TXT_token # text     ,        
+                      QUO_token # quotation,        
+                      AOP_token # operator ,        
+                      MOP_token # operator ,        
+                      ROP_token # operator ,        
+                      XOP_token # operator ,        
+                      NAM_token # name     ,          
+                      LBC_token # begin_   );
+      unary(Ref)::
+        { cas: unr_case(TKN); 
+          exp: cas();
+          APL(Ref, TAB([exp])) };
+
+      opr_case:: case(NBR_token # unary     ,         
+                      FRC_token # unary     ,       
+                      TXT_token # unary     ,           
+                      QUO_token # unary     ,         
+                      AOP_token # unary     ,        
+                      MOP_token # unary     ,        
+                      ROP_token # unary     ,        
+                      XOP_token # unary     ,        
+                      NAM_token # unary     ,            
+                      LBC_token # unary     ,          
+                           void # invocation);    
+                              
+      operator():=
+        { ref: variable();
+          cas: opr_case(TKN);
+          cas(ref) };
+
+      opd_case:: case(NBR_token # number       ,         
+                      FRC_token # fraction     ,      
+                      TXT_token # text         ,          
+                      QUO_token # quotation    ,          
+                      AOP_token # operator     ,          
+                      MOP_token # operator     ,       
+                      ROP_token # operator     ,         
+                      XOP_token # operator     ,          
+                      NAM_token # name         ,            
+                      LBC_token # begin_       ,                  
+                      LBR_token # table        ,                   
+                      LPR_token # subexpression,    
+                           void # unexpected   );
+
+      operand():=
+        { cas: opd_case(TKN); 
+          cas() };
+
+      factor():: 
+        infix(operand, XOP_token);
+
+      term():: 
+        infix(factor, MOP_token);
+
+      comparand():: 
+        infix(term, AOP_token);
+
+      operation()::
+        infix(comparand, ROP_token);
+
+      definition(Opr):: 
+        DEF(next(Opr), expression());
+        
+      declaration(Opr):: 
+        DCL(next(Opr), expression());
+        
+      assignment(Opr):: 
+        SET(next(Opr), expression());
+        
+      exp_case:: case(COL_token # definition ,   
+                      CCL_token # declaration,   
+                      CEQ_token # assignment ,    
+                           void # identity   );
+                         
+      expression():=
+        { opr: operation();
+          cas: exp_case(TKN); 
+          cas(opr) }; 
+         
+      Read(Str):= 
+        { TKN:= Init_Scan(Str); 
+          exp: expression();
+          expect(END_token);
+          exp };
+
+      Read(Str) };
+
+  display("reader ....... installed", eoln) }

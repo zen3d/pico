@@ -1,0 +1,86 @@
+`*-----------------------------------*`
+`*           >>>Pico 2.0<<<          *`
+`*            Theo D'Hondt           *`
+`*  VUB Programming Technology Lab   *`
+`*               ©2002               *`
+`*-----------------------------------*`
+`*           dictionaries            *`
+`*      (METACIRCULAR VERSION)       *`
+`*-----------------------------------*`
+
+{ Add_Var(Nam, Val, Dct):
+    VAR(Nam, Val, Dct); 
+
+  Add_Cst(Nam, Val, Dct):
+    CST(Nam, Val, Dct);
+
+  Get_Any(Nam, Dct):
+    Error("dictionary not initialized"); 
+
+  Get_Cst(Nam, Dct):
+    Error("dictionary not initialized"); 
+
+  Set_Var(Nam, Val, Dct):
+    Error("dictionary not initialized"); 
+
+  Init_Dict():
+    { tag ## action(Nam, Dct)::
+        tag#action;
+
+      tag ### action(Nam, Val, Dct)::
+        tag#action;
+
+      same_name(Na1, Na2)::
+        { na1: Na1[TXT_VAL];
+          na2: Na2[TXT_VAL];
+          na1 = na2 };
+
+      any_case:: case(VAR_tag ## if(same_name(Dct[VAR_NAM], Nam),
+                                    Dct[VAR_VAL],
+                                    Get_Any(Nam, Dct[VAR_DCT])),
+                      CST_tag ## if(same_name(Dct[CST_NAM], Nam),
+                                    Dct[CST_VAL],
+                                    Get_Any(Nam, Dct[CST_DCT])),
+                      VOI_tag ## Error("undefined: " + Nam[TXT_VAL]),
+                         void ## Error("abstract grammar violation"));
+  
+      Get_Any(Nam, Dct):=
+        { tag: TAG(Dct);
+          cas: any_case(tag);
+          cas(Nam, Dct) };
+     
+      cst_case:: case(VAR_tag ## if(same_name(Dct[VAR_NAM], Nam),
+                                    Error("is invisible: " + Nam[TXT_VAL]),
+                                    Get_Cst(Nam, Dct[VAR_DCT])),
+                      CST_tag ## if(same_name(Dct[CST_NAM], Nam),
+                                    Dct[CST_VAL],
+                                    Get_Cst(Nam, Dct[CST_DCT])),
+                      VOI_tag ## Error("undefined: " + Nam[TXT_VAL]),
+                         void ## Error("abstract grammar violation"));
+  
+      Get_Cst(Nam, Dct):=
+        { tag: TAG(Dct);
+          cas: cst_case(tag);
+          cas(Nam, Dct) };
+
+      set_case:: case(VAR_tag ### if(same_name(Dct[VAR_NAM], Nam),
+                                     Dct[VAR_VAL]:= Val,
+                                     Set_Var(Nam, Val, Dct[VAR_DCT])),
+                      CST_tag ### if(same_name(Dct[CST_NAM], Nam),
+                                     Error("cannot be changed: " + Nam[TXT_VAL]),
+                                     Set_Var(Nam, Val, Dct[CST_DCT])),
+                      VOI_tag ### Error("undefined: " + Nam[TXT_VAL]),
+                         void ### Error("abstract grammar violation"));
+  
+      Set_Var(Nam, Val, Dct):=
+        { tag: TAG(Dct);
+          cas: set_case(tag);
+          cas(Nam, Val, Dct);
+          void };
+
+      Init_Dict():=
+        _VOID_;
+
+      Init_Dict() };
+
+  display("dictionary ... installed", eoln) }

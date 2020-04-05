@@ -1,0 +1,20 @@
+TextPico 2.0
+
+The pico interpreter by Dr Theo D'Hondt.  (tjdhondt@vub.ac.be)
+User interfaces by Dirk van Deun.  (dvandeun@vub.ac.be)
+
+URL: pico.vub.ac.be
+
+In tpico, the arrow keys will access a command line history of
+up to 500 lines, which are also saved to ~/.tpico_history.
+Ctrl-C will either end a running computation, or kill the
+interpreter, when there is no running computation.
+
+There is a man page with further information on tpico.
+
+This package includes what was once called a work-in-progress
+version of wxPico, a GUI version based on wxWidgets, and
+what is now simply called unmaintained, unused code.
+
+The current interpreter cannot be run reliably on processors
+that align data on 8-byte boundaries.  (Think Sun SPARC.)

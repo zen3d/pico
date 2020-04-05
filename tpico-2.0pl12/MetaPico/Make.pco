@@ -1,0 +1,18 @@
+`*-----------------------------------*`
+`*           >>>Pico 2.0<<<          *`
+`*            Theo D'Hondt           *`
+`*  VUB Programming Technology Lab   *`
+`*               ©2002               *`
+`*-----------------------------------*`
+`*                make               *`
+`*      (METACIRCULAR VERSION)       *`
+`*-----------------------------------*`
+
+{ load("Global.pco");
+  load("Scan.pco"  );
+  load("Read.pco"  );  
+  load("Dict.pco"  );
+  load("Eval.pco"  ); 
+  load("Print.pco" ); 
+  load("Native.pco");
+  load("Pico.pco"  ) }

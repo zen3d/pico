@@ -1,0 +1,385 @@
+`*-----------------------------------*`
+`*           >>>Pico 2.0<<<          *`
+`*            Theo D'Hondt           *`
+`*  VUB Programming Technology Lab   *`
+`*               ©2002               *`
+`*-----------------------------------*`
+`*             evaluator             *`
+`*      (METACIRCULAR VERSION)       *`
+`*-----------------------------------*`
+
+{ Eval(Exp):
+    Error("evaluator not initialized");
+        
+  Apply(Fun, Tab):
+    Error("evaluator not initialized");
+        
+  Capture():
+    Error("evaluator not initialized");
+        
+  Commit(Dct):
+    Error("evaluator not initialized");
+        
+  Init_Eval(Dct):
+    { DCT: Dct;
+
+      reference_name(Ref)::
+        { tag: TAG(Ref);
+          if(tag != REF_tag,
+            Error("reference required"));
+          Ref[REF_NAM] };
+
+      eval_reference(Ref)::
+        { nam: Ref[REF_NAM];
+          Get_Any(nam, DCT) };
+
+      call_function(Exp, Dct)::
+        { dct: DCT;
+          DCT:= Dct;
+          val: Eval(Exp);
+          DCT:= dct;
+          val };
+
+      bind_reference(Exp, Ref, Dct)::
+        { nam: Ref[REF_NAM];
+          val: Eval(Exp);
+          Add_Var(nam, val, Dct) };
+
+      bind_application(Exp, Apl, Dct)::
+        { nam: reference_name(Apl[APL_EXP]);
+          arg: Apl[APL_ARG]; 
+          fun: FUN(nam, arg, Exp, DCT);
+          Add_Var(nam, fun, Dct) };
+
+      bind_error(Tab, Err, Dct)::
+        Error("illegal parameter");
+   
+      bind_case:: case(REF_tag # bind_reference,
+                       APL_tag # bind_application,
+                          void # bind_error);
+  
+      call_table(TbA, TbP, Dct)::
+        { tbP: TbP[TAB_TAB];
+          siz: size(TbA);
+          if(siz = size(tbP),
+             for(k: 1, k <= siz, k:= k+1,
+                 { arg: TbA[k];
+                   par: tbP[k];
+                   tag: TAG(par);
+                   cas: bind_case(tag);
+                   Dct:= cas(arg, par, Dct) }),
+             Error("illegal argument count"));
+          Dct };
+
+      call_reference(Tab, Ref, Dct)::
+        { nam: Ref[REF_NAM];
+          siz: size(Tab);
+          exp: if(siz > 0,
+                 TAB(Map(Eval, Tab)),
+                 _EMPTY_);
+          Add_Var(nam, exp, Dct) };
+   
+      call_application(Tab, Apl, Dct)::
+        { nam: reference_name(Apl[APL_EXP]);
+          arg: Apl[APL_ARG]; 
+          siz: size(Tab);
+          make(Exp)::
+            FUN(nam, arg, Exp, DCT);
+          exp: if(siz > 0,
+                 TAB(Map(make, Tab)),
+                 _EMPTY_);
+          Add_Var(nam, exp, Dct) };
+   
+      call_error(Tab, Exp, Dct)::
+        Error("illegal parameter");
+   
+      call_case:: case(TAB_tag # call_table,
+                       REF_tag # call_reference,
+                       APL_tag # call_application,
+                          void # call_error);
+  
+      eval_apply(Fun, Tab)::
+        { par: Fun[FUN_PAR];
+          bod: Fun[FUN_BOD];
+          dct: Fun[FUN_DCT];
+          tag: TAG(par);
+          cas: call_case(tag);
+          dct:= cas(Tab, par, dct);
+          call_function(bod, dct) };
+
+      application(Fun, Arg)::
+        { if(!is_TAB(Arg),
+             Arg:= Eval(Arg));
+          if(is_TAB(Arg),
+            { arg: Arg[TAB_TAB];
+              if(is_FUN(Fun),
+                eval_apply(Fun, arg),
+                if(is_NAT(Fun),
+                  { nat: Fun[NAT_NAT]; 
+                    nat(arg) },
+                  Error("(native) function required"))) },
+            Error("illegal argument expression")) };
+
+      eval_application(Apl)::
+        { fun: Eval(Apl[APL_EXP]);
+          arg: Apl[APL_ARG];
+          application(fun, arg) };
+
+      tabulation(Tab, Idx, Act(Tab, Nbr))::
+        if(is_TAB(Idx),
+          { itb: Idx[TAB_TAB];
+            siz: size(itb);
+            loop(Tab, Cnt):
+              { val: Eval(itb[Cnt]); 
+                if(is_NBR(val),
+                  { nbr: val[NBR_VAL];
+                    tag: TAG(Tab);
+                    if(nbr > 0,
+                      if(tag = TAB_tag,
+                        { tab: Tab[TAB_TAB];
+                          if(nbr > size(tab),
+                            Error("index beyond size"),
+                            if(Cnt < siz, 
+                              loop(tab[nbr], Cnt+1), 
+                              Act(tab, nbr))) },
+                        Error("table required")),
+                      Error("non-positive index")) },
+                  Error("invalid index")) };
+            loop(Tab, 1) },
+          Error("index(es) required"));
+
+      eval_tabulation(Tbl)::
+        { tab: Eval(Tbl[TBL_EXP]);
+          idx: Tbl[TBL_IDX];
+          tabulation(tab, idx, Tab[Nbr]) };
+
+      qualified_reference(Ref, Dct)::
+        { nam: Ref[REF_NAM];
+          Get_Cst(nam, Dct) };
+
+      qualified_application(Apl, Dct)::
+        { exp: Apl[APL_EXP];
+          nam: reference_name(exp);
+          arg: Apl[APL_ARG];
+          fun: Get_Cst(nam, Dct);
+          application(fun, arg) };
+
+      qualified_tabulation(Tbl, Dct)::
+        { exp: Tbl[TBL_EXP];
+          nam: reference_name(exp);
+          idx: Tbl[TBL_IDX];
+          exp: Get_Cst(nam, Dct);
+          tabulation(exp, idx, Tab[Nbr]) };
+
+      qualification_error(Nam, Inv)::
+         Error("abstract grammar violation");
+  
+      qualification_case:: case(REF_tag # qualified_reference,
+                                APL_tag # qualified_application,
+                                TBL_tag # qualified_tabulation,
+                                   void # qualification_error);
+  
+      eval_qualification(Qua)::
+        { dct: Eval(Qua[QUA_EXP]);
+          if(is_DCT(dct),
+            { inv: Qua[QUA_INV];
+              tag: TAG(inv);
+              cas: qualification_case(tag);
+              cas(inv, dct) },
+            Error("dictionary required")) };
+
+      add_reference(Ref, Exp, Add)::
+        { nam: Ref[REF_NAM];
+          val: Eval(Exp);
+          DCT:= Add(nam, val, DCT);
+          val };
+    
+      add_application(Apl, Exp, Add)::
+        { nam: reference_name(Apl[APL_EXP]);
+          arg: Apl[APL_ARG];
+          fun: FUN(nam, arg, Exp, _VOID_);
+          DCT:= Add(nam, fun, DCT);
+          fun[FUN_DCT]:= DCT;
+          fun };
+    
+      add_tabulation(Tbl, Exp, Add)::
+        { nam: reference_name(Tbl[TBL_EXP]);
+          idx: Tbl[TBL_IDX];
+          if(is_TAB(idx),
+             { itb: idx[TAB_TAB];
+               siz: size(itb);
+               loop(cnt):
+                 { val: Eval(itb[cnt]); 
+                   if(is_NBR(val),
+                     { nbr: val[NBR_VAL];
+                       if(cnt<siz,
+                         if(nbr>0,
+                           { tab[nbr]: loop(cnt+1);
+                             TAB(tab) },
+                           Error("non-positive index")),
+                         if(nbr>=0,
+                           { tab[nbr]: Eval(Exp);
+                             TAB(tab) },
+                           Error("negative index"))) },
+                   Error("invalid size")) };
+               tab: loop(1);
+               DCT:= Add(nam, tab, DCT);
+               tab },
+             Error("index(es) required")) };
+
+      add_error(Inv, Exp, Add)::
+         Error("abstract grammar violation");
+  
+      add_case:: case(REF_tag # add_reference,
+                      APL_tag # add_application,
+                      TBL_tag # add_tabulation,
+                         void # add_error);
+  
+      eval_definition(Def)::
+        { inv: Def[DEF_INV];
+          exp: Def[DEF_EXP];
+          tag: TAG(inv);
+          cas: add_case(tag);
+          cas(inv, exp, Add_Var) };
+
+      eval_declaration(Dcl)::
+        { inv: Dcl[DCL_INV];
+          exp: Dcl[DCL_EXP];
+          tag: TAG(inv);
+          cas: add_case(tag);
+          cas(inv, exp, Add_Cst) };
+
+      assign_reference(Ref, Exp)::
+        { nam: Ref[REF_NAM];
+          val: Eval(Exp);
+          Set_Var(nam, val, DCT);
+          val };
+    
+      assign_application(Apl, Exp)::
+        { nam: reference_name(Apl[APL_EXP]);
+          arg: Apl[APL_ARG];
+          fun: FUN(nam, arg, Exp, DCT);
+          Set_Var(nam, fun, DCT);
+          fun };
+    
+      assign_tabulation(Tbl, Exp)::
+        { tab: Eval(Tbl[TBL_EXP]);
+          idx: Tbl[TBL_IDX];
+          tabulation(tab, idx, Tab[Nbr]:= Eval(Exp)) };
+   
+      assign_error(Inv, Exp)::
+         Error("abstract grammar violation");
+  
+      assign_case:: case(REF_tag # assign_reference,
+                         APL_tag # assign_application,
+                         TBL_tag # assign_tabulation,
+                            void # assign_error);
+  
+      eval_assignment(Exp)::
+        { inv: Exp[SET_INV];
+          exp: Exp[SET_EXP];
+          tag: TAG(inv);
+          cas: assign_case(tag);
+          cas(inv, exp) };
+    
+      eval_quotation(Exp)::
+        { quote(Exp): void;
+
+          expression(Exp)::
+            Map_expression(quote, Exp);
+    
+          table(Tab)::
+            { tab: Tab[TAB_TAB];
+              siz: size(tab);
+              if(siz = 0,
+                _EMPTY_,
+                TAB(Map(quote, tab))) };
+    
+          splice(Quo)::
+            { exp: Quo[QUO_EXP];
+              Eval(exp) };
+    
+          value(Val)::
+            Val;
+    
+          error(Exp)::
+            Error("abstract grammar violation");
+  
+          quote_case:: case(VOI_tag # value,
+                            REF_tag # expression,
+                            APL_tag # expression,
+                            TBL_tag # expression,
+                            QUA_tag # expression,
+                            DEF_tag # expression,
+                            DCL_tag # expression,
+                            SET_tag # expression,
+                            CST_tag # expression,
+                            VAR_tag # expression,
+                            CNT_tag # expression,
+                            NAT_tag # expression,
+                            FUN_tag # expression,
+                            TAB_tag # table,
+                            TXT_tag # value,
+                            FRC_tag # value,
+                            QUO_tag # splice,
+                            NBR_tag # value,
+                               void # error);
+  
+          quote(Exp):=
+            { tag: TAG(Exp);
+              cas: quote_case(tag);
+              cas(Exp) };
+ 
+          exp: Exp[QUO_EXP];
+          quote(exp) };
+    
+      eval_identity(Exp)::
+        Exp;
+    
+      eval_error(Exp)::
+         Error("abstract grammar violation");
+  
+      eval_case:: case(VOI_tag # eval_identity,
+                       REF_tag # eval_reference,
+                       APL_tag # eval_application,
+                       TBL_tag # eval_tabulation,
+                       QUA_tag # eval_qualification,
+                       DEF_tag # eval_definition,
+                       DCL_tag # eval_declaration,
+                       SET_tag # eval_assignment,
+                       CST_tag # eval_identity,
+                       VAR_tag # eval_identity,
+                       CNT_tag # eval_identity,
+                       NAT_tag # eval_identity,
+                       FUN_tag # eval_identity,
+                       TAB_tag # eval_identity,
+                       TXT_tag # eval_identity,
+                       FRC_tag # eval_identity,
+                       QUO_tag # eval_quotation,
+                       NBR_tag # eval_identity,
+                          void # eval_error);
+  
+      Eval(Exp):=
+        { tag: TAG(Exp);
+          cas: eval_case(tag);
+          cas(Exp) };
+  
+      Apply(Fun, Tab):=
+        if(is_FUN(Fun),
+           eval_apply(Fun, Tab),
+           { nat: Fun[NAT_NAT]; 
+             nat@Tab });
+
+      Capture():=
+        DCT;
+
+      Commit(Dct):=
+        { DCT:= Dct; _VOID_ };
+
+      Init_Eval(Dct):=
+        { DCT:= Dct;
+          void };
+
+      void };
+
+   display("evaluator .... installed", eoln) }

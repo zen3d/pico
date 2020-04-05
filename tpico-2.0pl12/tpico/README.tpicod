@@ -1,0 +1,22 @@
+Tpicod is safe to use as a network service.  This means that:
+
+  - the load primitive has been disabled,
+  - the memory footprint has been reduced compared to that of tpico,
+  - a 20 seconds limit has been put on processing time,
+  - the command line history is not saved.
+
+Also, tpicod does not process command line parameters.  This makes it
+easy to install as a service as follows in inetd.conf (one line):
+
+telnet stream tcp nowait games
+  /usr/sbin/tcpd in.telnetd -L /usr/local/bin/tpicod
+
+The telnet daemon I use is netkit-telnetd (standard in Slackware).
+
+When tpicod is used with an ordinary telnet daemon, it gets a tty, so
+it does not have to process telnet control characters itself.  You
+can also install tpicod without a telnet daemon, but then you better
+access it with netcat instead of with telnet.
+
+The tty also makes it trivially easy to process ctrl-c and to use the
+readline libraries.

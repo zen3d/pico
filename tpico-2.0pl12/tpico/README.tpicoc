@@ -1,0 +1,12 @@
+Another safe tpico: tpicoc has similar sandbox features as tpicod,
+but it accepts (exactly) one file name command line argument.  It also
+assumes the command line argument -sbi.  (-DONEARG)
+
+It is safe for tpico-demo.cgi.
+
+Cgi-bins that do not eval untrusted code might also use tpicos, which
+has -DONEARG as its only security feature.  Allowing only one
+argument is necessary for all cgi-bins, to prevent code injection
+through the http query string.  It is also the tpico of choice to use
+for all standalone programs, although security is not really an 
+issue there.  (#!/usr/local/bin/tpicos)

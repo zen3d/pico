@@ -1,0 +1,595 @@
+`*-----------------------------------*`
+`*           >>>Pico 2.0<<<          *`
+`*            Theo D'Hondt           *`
+`*  VUB Programming Technology Lab   *`
+`*               ©2002               *`
+`*-----------------------------------*`
+`*        native declarations        *`
+`*      (METACIRCULAR VERSION)       *`
+`*-----------------------------------*`
+
+{ Init_Native():
+  { meta_NBR(Nbr):
+      if(is_NBR(Nbr), 
+        Nbr[NBR_VAL],
+        Error("number required"));
+    
+    meta_ORD(Ord):
+      { ord: meta_NBR(Ord);
+        if((ord>=0) & (ord<=255),
+          ord,
+          Error("ordinal required")) };
+    
+    meta_NUM(Num):
+      if(is_NBR(Num), 
+        Num[NBR_VAL],
+        if(is_FRC(Num),
+          Num[FRC_VAL],
+          Error("number or fraction required")));
+          
+    meta_LIT(Lit):
+      if(is_NBR(Lit), 
+        Lit[NBR_VAL],
+        if(is_FRC(Lit),
+          Lit[FRC_VAL],
+          if(is_TXT(Lit), 
+            Lit[TXT_VAL],
+            void)));
+          
+    meta_TXT(Txt):
+      if(is_TXT(Txt), 
+        Txt[TXT_VAL],
+        Error("text required"));
+
+    meta_CHR(Chr):
+      { chr: meta_TXT(Chr);
+        if(length(chr) = 1,
+          chr,
+          Error("character required")) };
+    
+    meta_TAB(Tab):
+      if(is_TAB(Tab),
+        Tab[TAB_TAB],
+        Error("table required"));
+
+    meta_PAI(Pai):
+      { pai: meta_TAB(Pai);
+        if(size(pai) = 2,
+          pai,
+          Error("pair required")) };
+
+    meta_CNT(Cnt):
+      if(is_CNT(Cnt),
+        Cnt[CNT_CNT],
+        Error("continuation required"));
+
+    base_NUM(Num):
+      if(is_number(Num), 
+        NBR(Num),
+        if(is_fraction(Num), 
+          FRC(Num),
+          Error("number or fraction required")));
+
+    base_BLN(Bln):
+      if(Bln, _TRUE_, _FALSE_);
+
+    arg_1(Arg, Ac1(p)): 
+      if(size(Arg) = 1,
+        Ac1@Arg,
+        Error("1 argument required"));
+
+    arg_2(Arg, Ac2(p,q)): 
+      if(size(Arg) = 2,
+        Ac2@Arg,
+        Error("2 arguments required"));
+
+    arg_2_3(Arg, Ac2(p,q), Ac3(p,q,r)): 
+      if(size(Arg) = 2,
+        Ac2@Arg,
+        if(size(Arg) = 3,
+          Ac3@Arg,
+          Error("2 or 3 arguments required")));
+
+    arg_4(Arg, Ac4(p,q,r,s)): 
+      if(size(Arg) = 4,
+        Ac4@Arg,
+        Error("4 arguments required"));
+
+    eval_arg_0(Arg, Ac0()): 
+      if(size(Arg) = 0,
+        Ac0(),
+        Error("no arguments allowed"));
+
+    eval_arg_1(Arg, Ac1(p)): 
+      if(size(Arg) = 1,
+        Ac1(Eval(Arg[1])),
+        Error("1 argument required"));
+
+    eval_arg_2(Arg, Ac2(p,q)): 
+      if(size(Arg) = 2,
+        Ac2(Eval(Arg[1]),Eval(Arg[2])),
+        Error("2 arguments required"));
+
+    eval_arg_3(Arg, Ac3(p,q,r)): 
+      if(size(Arg) = 3,
+        Ac3(Eval(Arg[1]),Eval(Arg[2]),Eval(Arg[3])),
+        Error("3 arguments required"));
+
+    eval_arg_1_n(Arg, Ac1(p), Acn(p,q)):
+      { siz: size(Arg);
+        if(siz = 1,
+          Ac1(Eval(Arg[1])),
+          if(siz > 1,
+            { val: Eval(Arg[1]);
+              for(k:2, k<=siz, k:=k+1,
+                val:= Acn(val, Eval(Arg[k]))) },
+          Error("at least 1 argument required"))) };
+
+    eval_arg_2_n(Arg, Acn(p,q)):
+      { siz: size(Arg);
+        if(siz > 1,
+          { val: Eval(Arg[1]);
+            for(k: 2, k<=siz, k:=k+1,
+              val:= Acn(val, Eval(Arg[k]))) },
+        Error("at least 2 arguments required")) };
+
+    boolean(Bln, Cns, Alt):
+      if(Bln ~ _TRUE_,
+        Eval(Cns),
+        if(Bln ~ _FALSE_,
+          Eval(Alt),
+          Apply(Bln, TAB([Cns, Alt]))));
+
+    add_fun(Arg):
+      eval_arg_1_n(Arg,
+        base_NUM(+meta_NUM(p)),
+        if(is_TXT(p) & is_TXT(q),
+          TXT(meta_TXT(p) + meta_TXT(q)),
+          base_NUM(meta_NUM(p) + meta_NUM(q))));
+
+    sub_fun(Arg):
+      eval_arg_1_n(Arg,
+        base_NUM(-meta_NUM(p)),
+        base_NUM(meta_NUM(p) - meta_NUM(q)));
+    
+    mul_fun(Arg):
+      eval_arg_2_n(Arg, 
+        base_NUM(meta_NUM(p) * meta_NUM(q)));
+    
+    fdv_fun(Arg): 
+      eval_arg_2_n(Arg, 
+        { num: meta_NUM(q);
+          if(num = 0,
+            Error("division by zero"),
+            base_NUM(meta_NUM(p) / num)) });
+    
+    idv_fun($):
+      fun(Arg): 
+        eval_arg_2_n(Arg, 
+          { nbr: meta_NBR(q);
+            if(nbr = 0,
+              Error("division by zero"),
+              NBR(meta_NBR(p) $ nbr)) });
+    
+    exp_fun(Arg):
+      eval_arg_2_n(Arg, 
+        { num: meta_NUM(p);
+          if(num<0,
+            Error("negative base number"),
+            FRC(num ^ meta_NUM(q))) });
+
+    rel_fun($):
+      fun(Arg):
+        eval_arg_2(Arg, 
+          if(is_TXT(p) & is_TXT(q),
+            base_BLN(meta_TXT(p) $ meta_TXT(q)),
+            base_BLN(meta_NUM(p) $ meta_NUM(q))));
+    
+    eqv_fun(Arg):
+        eval_arg_2(Arg, base_BLN(p ~ q));
+    
+    nqv_fun(Arg):
+        eval_arg_2(Arg, base_BLN(p !~ q));
+    
+    tru_fun(Arg):
+      eval_arg_1(Arg, NBR(trunc(meta_NUM(p))));
+    
+    abs_fun(Arg):
+      eval_arg_1(Arg, base_NUM(abs(meta_NUM(p))));
+    
+    chr_fun(Arg):
+      eval_arg_1(Arg, TXT(char(meta_ORD(p))));
+     
+    ord_fun(Arg):
+      eval_arg_1(Arg, NBR(ord(meta_CHR(p))));
+
+    nbr_fun(Arg):
+      eval_arg_1(Arg,
+        { num: number(meta_TXT(p));
+          if(is_void(num),
+            _VOID_,
+            base_NUM(num))});
+      
+    txt_fun(Arg):
+      eval_arg_1(Arg, TXT(text(meta_LIT(p))));
+
+    rnd_fun(Arg):
+      eval_arg_0(Arg, NBR(random()));
+
+    clk_fun(Arg):
+      eval_arg_0(Arg, FRC(clock()));
+
+    trs_fun(Opr):
+      fun(Arg):
+        eval_arg_1(Arg, FRC(Opr(meta_NUM(p))));
+    
+    len_fun(Arg):
+      eval_arg_1(Arg, NBR(length(meta_TXT(p))));
+
+    epl_fun(Arg):
+      eval_arg_1(Arg, TAB(Map(NBR, explode(meta_TXT(p)))));
+    
+    ipl_fun(Arg):
+      eval_arg_1(Arg, TXT(implode(Map(meta_ORD, meta_TAB(p)))));
+
+    typ_fun(Tfn):
+      fun(Arg):
+        eval_arg_1(Arg, base_BLN(Tfn(p)));
+         
+    siz_fun(Arg):
+      eval_arg_1(Arg, NBR(size(meta_TAB(p))));
+
+    tab_fun(Arg):
+      { siz: size(Arg);
+        if(siz > 0,
+          TAB(Map(Eval, Arg)),
+          _EMPTY_) };
+
+    pai_fun(Arg):
+      eval_arg_2(Arg, TAB([p, q]));
+
+    dsp_fun(Arg):
+      { for(cnt:1, cnt<=size(Arg), cnt:=cnt+1,
+          Print(Eval(Arg[cnt])));
+        _NULL_ };
+    
+    acc_fun(Arg):
+      eval_arg_0(Arg, TXT(accept()));
+    
+    trr_fun(Arg):
+      arg_2(Arg, Eval(p));
+
+    fls_fun(Arg):
+      arg_2(Arg, Eval(q));
+
+    and_fun(Arg):
+      arg_2(Arg, boolean(Eval(p), q, _FALSE_));
+
+    orr_fun(Arg):
+      arg_2(Arg, boolean(Eval(p), _TRUE_, q));
+
+    not_fun(Arg):
+      arg_1(Arg, boolean(Eval(p), _FALSE_, _TRUE_));
+
+    bgn_fun(Arg):
+      { siz: size(Arg);
+        if(siz > 0,
+          for(cnt:1, cnt<=siz, cnt:=cnt+1,
+            Eval(Arg[cnt])), 
+          Error("at least 1 argument required")) };
+
+    iff_fun(Arg):
+       arg_2_3(Arg, 
+         boolean(Eval(p), q, _VOID_),
+         boolean(Eval(p), q, r));
+
+    whi_fun(Arg):
+      arg_2(Arg,
+        { val: _VOID_;
+          while(Eval(p) ~ _TRUE_,
+            val:= Eval(q)); 
+          val });
+
+    unt_fun(Arg):
+      arg_2(Arg,
+        { val: _VOID_;
+          until(Eval(p) ~ _TRUE_, 
+            val:= Eval(q)); 
+          val });
+
+    for_fun(Arg):
+       arg_4(Arg, 
+        { val: _VOID_;
+          for(Eval(p), Eval(q) ~ _TRUE_, Eval(r), 
+            val:= Eval(s)); 
+          val });
+
+    cas_fun(Arg):
+      { els: _VOID_;
+        siz: size(Arg);
+        max: -1073741823;
+        min: +1073741823;
+        loop(Pos):
+          if(Pos > siz,
+            if(max < min,
+              Error("at least 1 argument required"),
+              jmp[max-min+1]: els),
+            { pai: meta_PAI(Eval(Arg[Pos]));
+              if(pai[1]~_VOID_,
+                { if(els !~ _VOID_,
+                    Error("only 1 else clause allowed"));
+                  els:= pai[2];
+                  loop(Pos+1) },
+                { tag: meta_NBR(pai[1]);
+                  if(tag > max, max:= tag);
+                  if(tag < min, min:= tag);
+                  jmp: loop(Pos+1);
+                  jmp[tag-min+1]:= pai[2];
+                  jmp }) });
+        jmp: loop(1);
+        NAT("case_selector",
+          select(Arg)::
+            eval_arg_1(Arg,
+              { tag: meta_NBR(p);
+                if((tag < min) | (tag > max),
+                  els, 
+                  jmp[tag-min+1]) })) };
+
+    lod_fun(Arg):
+      Error("not yet implemented");
+
+    dmp_fun(Arg):
+      Error("not yet implemented");
+
+    rea_fun(Arg):
+      eval_arg_1(Arg, Read(meta_TXT(p)));
+
+    eva_fun(Arg):
+      eval_arg_1(Arg, Eval(p));
+
+    pri_fun(Arg):
+      eval_arg_1(Arg, { Print(p); _NULL_ });
+
+    tag_fun(Arg):
+      eval_arg_1(Arg, TAG(p));
+
+    rnk_fun(Arg):
+      eval_arg_1(Arg, NBR(Rank(p)));
+
+    mak_fun(Arg):
+      { tag ## action()::
+          tag # action;
+        tag_case: case(VOI_tag ## _VOID_,
+                       FRC_tag ## FRC(0.0),
+                       TXT_tag ## _NULL_,
+                       TAB_tag ## _EMPTY_,
+                       FUN_tag ## FUN("<undefined>", _VOID_, _VOID_, _VOID_),
+                       NAT_tag ## NAT("<undefined>", 0),
+                       REF_tag ## REF("<undefined>"),
+                       APL_tag ## APL("<undefined>", _EMPTY_),
+                       TBL_tag ## TBL("<undefined>", TAB([_ZERO_])),
+                       QUA_tag ## QUA("<undefined>", REF("<undefined>")),
+                       DEF_tag ## DEF(REF("<undefined>"), _VOID_),
+                       DCL_tag ## DCL(REF("<undefined>"), _VOID_),
+                       SET_tag ## SET(REF("<undefined>"), _VOID_),
+                       VAR_tag ## VAR("<undefined>", _VOID_, _VOID_),
+                       CST_tag ## CST("<undefined>", _VOID_, _VOID_),
+                       CNT_tag ## CNT(call(continuation)),
+                       NBR_tag ## ZERO,
+                          void ## Error("abstract grammar violation"));
+
+        mak_fun(Arg):=
+          { eval_arg_1(Arg, 
+              { tag: meta_NBR(p);
+                cas: tag_case(tag);
+                cas() }) };
+
+        mak_fun(Arg) };
+
+    get_fun(Arg):
+      eval_arg_2(Arg, 
+        { idx: meta_NBR(q);
+          if((idx>=2)&(idx<=size(p)),
+            p[idx],
+            Error("abstract grammar violation")) });
+
+    set_fun(Arg):
+      eval_arg_3(Arg,
+        { idx: meta_NBR(q);
+          if((idx>=2)&(idx<=size(p)),
+            p[idx]:= r,
+            Error("abstract grammar violation")) });
+
+    cpt_fun(Arg):
+      eval_arg_0(Arg, Capture());
+
+    cmt_fun(Arg):
+      eval_arg_1(Arg, 
+        if(is_DCT(p), 
+          Commit(p),
+          Error("Dictionary required")));            
+
+    cal_fun(Arg):
+      eval_arg_1(Arg, CNT(call(continuation)));
+
+    cnt_fun(Arg):
+      eval_arg_2(Arg, continue(meta_CNT(p)));
+
+    esc_fun(Arg):
+      eval_arg_1(Arg, Error("for documentation only"));
+
+    err_fun(Arg):
+      eval_arg_1(Arg, Error(meta_TXT(p)));
+
+    nat_tab: [ "+",
+               "-",
+               "*",
+               "/",
+               "//",
+               "\\",
+               "^",
+               "<",
+               "<=",
+               "=",
+               "!=",
+               ">",
+               ">=",
+               "~",
+               "!~",
+               "trunc",
+               "abs",
+               "char",
+               "ord",
+               "number",
+               "text",
+               "random",
+               "clock",
+               "sqrt",
+               "sin",
+               "cos",
+               "tan",
+               "arcsin",
+               "arccos",
+               "arctan",
+               "exp",
+               "log",
+               "length",
+               "explode",
+               "implode",
+               "is_void",
+               "is_number",
+               "is_fraction",
+               "is_text",
+               "is_table",
+               "is_function",
+               "is_dictionary",
+               "is_continuation",
+               "size",
+               "table",
+               "#",
+               "display",
+               "accept",
+               "true",
+               "false",
+               "&",
+               "|",
+               "!",
+               "begin",
+               "if",
+               "while",
+               "until",
+               "for",
+               "case",
+               "load",
+               "dump",
+               "read",
+               "eval",
+               "print",
+               "tag",
+               "rank",
+               "make",
+               "get",
+               "set",
+               "capture",
+               "commit",
+               "call",
+               "continue",
+               "escape",
+               "error" ];
+
+    fun_tab: [ add_fun,
+               sub_fun,
+               mul_fun,
+               fdv_fun,
+               idv_fun(//),
+               idv_fun(\\),
+               exp_fun,
+               rel_fun(<),
+               rel_fun(<=),
+               rel_fun(=),
+               rel_fun(!=),
+               rel_fun(>),
+               rel_fun(>=),
+               eqv_fun,
+               nqv_fun,
+               tru_fun,
+               abs_fun,
+               chr_fun,
+               ord_fun,
+               nbr_fun,
+               txt_fun,
+               rnd_fun,
+               clk_fun,
+               trs_fun(sqrt),
+               trs_fun(sin),
+               trs_fun(cos),
+               trs_fun(tan),
+               trs_fun(arcsin),
+               trs_fun(arccos),
+               trs_fun(arctan),   
+               trs_fun(exp),
+               trs_fun(log),
+               len_fun,
+               epl_fun,
+               ipl_fun,
+               typ_fun(is_VOI),
+               typ_fun(is_NBR),
+               typ_fun(is_FRC),
+               typ_fun(is_TXT),
+               typ_fun(is_TAB),
+               typ_fun(is_FNC),
+               typ_fun(is_DCT),
+               typ_fun(is_CNT),
+               siz_fun,
+               tab_fun,
+               pai_fun,
+               dsp_fun,
+               acc_fun,
+               trr_fun,
+               fls_fun,
+               and_fun,
+               orr_fun,
+               not_fun,
+               bgn_fun,
+               iff_fun,
+               whi_fun,
+               unt_fun,
+               for_fun,
+               cas_fun,
+               lod_fun,
+               dmp_fun,
+               rea_fun,
+               eva_fun,
+               pri_fun,
+               tag_fun,
+               rnk_fun,
+               mak_fun,
+               get_fun,
+               set_fun,
+               cpt_fun,
+               cmt_fun,
+               cal_fun,
+               cnt_fun,
+               esc_fun,
+               err_fun ];
+
+    Init_Native():=
+      { dct: Init_Dict();
+        for(idx: 1, idx < size(nat_tab), idx:= idx+1,
+          { nam: TXT(nat_tab[idx]);
+            dct:= Add_Var(nam,
+                          NAT(nam, fun_tab[idx]),
+                          dct) });
+        dct:= Add_Var(TXT("empty") , _EMPTY_, dct);
+        dct:= Add_Var(TXT("eoln")  , _EOLN_ , dct);
+        dct:= Add_Var(TXT("null")  , _NULL_ , dct);
+        dct:= Add_Var(TXT("quote") , _QUOTE_, dct);
+        dct:= Add_Var(TXT("void")  , _VOID_ , dct);
+        _TRUE_ := Get_Any(TXT("true"), dct);
+        _FALSE_:= Get_Any(TXT("false"), dct);      
+        Init_Eval(dct);
+        void };
+
+    Init_Native() };
+
+   display("natives ...... installed", eoln) }
